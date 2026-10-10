@@ -243,7 +243,7 @@ function autoAnswer(g) {
     case 'action': { var i = h.findIndex(function (c) { return L.isA(c, 'action'); }); return i >= 0 && g.actions > 0 ? { a: 'play', i: i } : { a: 'end' }; }
     case 'buy': {
       if (!g.bought && h.some(function (c) { return L.isA(c, 'treasure'); })) return { a: 'all' };
-      var pr = (window.__ll.buyList || ['oukan', 'gold', 'kajiba', 'jikeidan', 'jujutsu', 'silver']).filter(function (c) { return g.supply[c] > 0 && D[c].cost <= g.coins && (window.__ll.buyAny || D[c].cost >= 3); });
+      var pr = (window.__ll.buyList || ['oukan', 'gold', 'tetsuuchi', 'jikeidan', 'jujutsu', 'silver']).filter(function (c) { return g.supply[c] > 0 && D[c].cost <= g.coins && (window.__ll.buyAny || D[c].cost >= 3); });
       return pr.length && g.buys > 0 ? { a: 'buy', c: pr[0] } : { a: 'end' };
     }
     case 'hand': { var s = []; h.forEach(function (c, i) { if (s.length < nd.min && L.matches(c, nd.filter)) s.push(i); }); return { sel: s }; }

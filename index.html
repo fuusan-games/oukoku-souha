@@ -104,6 +104,7 @@ body.has-fab .screen:not(#game){bottom:calc(52px + env(safe-area-inset-bottom));
 .pst{display:flex;gap:4px;font-size:10.5px;font-weight:800;white-space:nowrap;align-items:center;line-height:1.2}
 .pst .vp{color:#a8640c;font-size:12px}
 .pst .dtop{margin-left:auto;font-size:12px}
+@media (max-width:420px){.pst{gap:1px;font-size:9px;letter-spacing:-.4px}.pst .vp{font-size:10.5px}.pst .dtop{font-size:10px}.pst>*{flex:none}.pr{padding:2px 2px 3px}}
 .pr.me .pn{color:var(--wine)}
 .pr.ultra{border-color:#7b5cff;animation:ultraPulse 2.2s ease-in-out infinite}
 @keyframes ultraPulse{0%,100%{box-shadow:0 0 8px 1px rgba(123,92,255,.55)}50%{box-shadow:0 0 16px 3px rgba(255,190,90,.75)}}

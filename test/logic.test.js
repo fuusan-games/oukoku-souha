@@ -4,7 +4,7 @@ const L = require('../logic.js'), A = require('../ai.js');
 let pass = 0, fail = 0;
 function ok(c, m) { if (c) pass++; else { fail++; console.log('  ✗ ' + m); } }
 function eq(a, b, m) { ok(JSON.stringify(a) === JSON.stringify(b), m + ' → ' + JSON.stringify(a) + '（期待 ' + JSON.stringify(b) + '）'); }
-const K0 = ['monooki', 'zange', 'hanebashi', 'shukuba', 'daikugoya', 'jikeidan', 'tatenaoshi', 'kajiba', 'ekken', 'jujutsu'];
+const K0 = ['monooki', 'zange', 'hanebashi', 'shukuba', 'daikugoya', 'jikeidan', 'tatenaoshi', 'tetsuuchi', 'ekken', 'jujutsu'];
 function G(o = {}) {
   return L.newGame({ np: o.np || 2, kingdom: o.k || K0, seed: o.seed || 1, start: o.start || 0, setup: S => {
     (o.hands || []).forEach((h, p) => { if (h) S.P[p].hand = h.slice(); });
@@ -22,7 +22,7 @@ const C5 = ['copper', 'copper', 'copper', 'copper', 'copper'];
 
 console.log('■ 準備（公式ルールブック 3ページ）');
 for (const np of [2, 3, 4]) {
-  const S = L.newGame({ np, kingdom: ['monooki', 'yakusou', 'hanebashi', 'shukuba', 'daikugoya', 'jikeidan', 'tatenaoshi', 'kajiba', 'ekken', 'jujutsu'], seed: 3 });
+  const S = L.newGame({ np, kingdom: ['monooki', 'yakusou', 'hanebashi', 'shukuba', 'daikugoya', 'jikeidan', 'tatenaoshi', 'tetsuuchi', 'ekken', 'jujutsu'], seed: 3 });
   const v = np === 2 ? 8 : 12;
   eq([S.supply.copper, S.supply.silver, S.supply.gold], [60 - 7 * np, 40, 30], np + '人：銅貨・銀貨・金貨（60−7×人数/40/30）');
   eq([S.supply.shoryo, S.supply.hakuryo, S.supply.oukan], [v, v, v], np + '人：小領地・伯爵領・王冠領 = ' + v);
@@ -66,12 +66,12 @@ console.log('■ ターンの流れ（ABC）・購入');
   A_(S, 0, { a: 'buy', c: 'curse' }); ok(S.P[0].disc.includes('curse'), '💰0 でも呪い（💰0）は買える');
 }
 {
-  const S = G({ hands: [['kajiba', 'shukuba', 'copper', 'copper', 'copper']], decks: [['shoryo', 'shoryo', 'shoryo', 'copper', 'copper', 'copper']] });
-  play(S, 'kajiba'); eq(S.phase, 'buy', 'アクションを使い切ると購入へ（⚡1しかない）');
-  eq(S.P[0].hand.length, 7, '鍛冶場：🃏+3');
+  const S = G({ hands: [['tetsuuchi', 'shukuba', 'copper', 'copper', 'copper']], decks: [['shoryo', 'shoryo', 'shoryo', 'copper', 'copper', 'copper']] });
+  play(S, 'tetsuuchi'); eq(S.phase, 'buy', 'アクションを使い切ると購入へ（⚡1しかない）');
+  eq(S.P[0].hand.length, 7, '鉄打ち場：🃏+3');
 }
 {
-  const S = G({ hands: [['shukuba', 'kajiba', 'copper', 'copper', 'copper']] });
+  const S = G({ hands: [['shukuba', 'tetsuuchi', 'copper', 'copper', 'copper']] });
   A_(S, 0, { a: 'end' }); eq(S.phase, 'buy', 'アクションは使わなくてもよい');
 }
 
@@ -119,9 +119,9 @@ console.log('■ 各カード');
   play(S3, 'ginzaiku'); A_(S3, 0, { a: 'all' }); eq(S3.coins, 5, '銀貨を出さなければボーナスなし（金貨3＋銅貨2）');
 }
 { // 小姓
-  const S = G({ hands: [['kosho', 'copper', 'copper', 'copper', 'shoryo']], decks: [['kajiba', 'gold', 'gold', 'gold', 'shoryo']] });
+  const S = G({ hands: [['kosho', 'copper', 'copper', 'copper', 'shoryo']], decks: [['tetsuuchi', 'gold', 'gold', 'gold', 'shoryo']] });
   play(S, 'kosho'); eq(S.coins, 2, '小姓：💰+2'); eq(S.need.why, 'kosho', 'めくったのがアクションなら使うか聞く');
-  A_(S, 0, { y: true }); eq(S.P[0].hand.length, 7, '小姓→鍛冶場を使った（🃏+3）'); ok(S.P[0].play.includes('kajiba') && !S.P[0].disc.includes('kajiba'), '使ったカードは場へ');
+  A_(S, 0, { y: true }); eq(S.P[0].hand.length, 7, '小姓→鉄打ち場を使った（🃏+3）'); ok(S.P[0].play.includes('tetsuuchi') && !S.P[0].disc.includes('tetsuuchi'), '使ったカードは場へ');
   eq(S.phase, 'buy', '⚡は増えない（小姓で⚡1を使った）');
   const S2 = G({ hands: [['kosho', 'copper', 'copper', 'copper', 'shoryo']], decks: [['gold', 'shoryo']] });
   play(S2, 'kosho'); eq(S2.P[0].disc, ['gold'], 'アクション以外はただ捨て札に'); eq(lastEv(S2, 'kosho').c, 'gold', '捨てたカードは公開');
@@ -137,7 +137,7 @@ console.log('■ 各カード');
   const S = G({ hands: [['daikugoya', 'copper', 'copper', 'copper', 'shoryo']] });
   play(S, 'daikugoya'); eq(S.need.k, 'supply', '大工小屋：供給から選ぶ'); ok(/もらえません/.test(L.act(S, 0, { c: 'jujutsu' })), '💰5 は不可');
   ok(/選んで/.test(L.act(S, 0, { c: null })), 'もらうのは義務（もらえるものがあれば）');
-  A_(S, 0, { c: 'kajiba' }); ok(S.P[0].disc.includes('kajiba'), '💰4 の鍛冶場を捨て札へ'); eq(S.supply.kajiba, 9, '供給から減る');
+  A_(S, 0, { c: 'tetsuuchi' }); ok(S.P[0].disc.includes('tetsuuchi'), '💰4 の鉄打ち場を捨て札へ'); eq(S.supply.tetsuuchi, 9, '供給から減る');
 }
 { // 徴税官
   const S = G({ np: 3, hands: [['chozei', 'copper', 'copper', 'copper', 'shoryo'], ['shoryo', 'hakuryo', 'copper', 'copper', 'copper'], ['copper', 'copper', 'silver', 'copper', 'copper']], decks: [['gold']] });
@@ -179,22 +179,22 @@ console.log('■ 各カード');
 { // 建て直し
   const S = G({ hands: [['tatenaoshi', 'shoryo', 'copper', 'copper', 'copper']] });
   play(S, 'tatenaoshi'); A_(S, 0, selCards(S, 0, ['shoryo'])); eq(S.need.max, 4, '小領地(2)→💰4 以下');
-  A_(S, 0, { c: 'kajiba' }); ok(S.trash.includes('shoryo') && S.P[0].disc.includes('kajiba'), '建て直し：追放して捨て札にもらう');
+  A_(S, 0, { c: 'tetsuuchi' }); ok(S.trash.includes('shoryo') && S.P[0].disc.includes('tetsuuchi'), '建て直し：追放して捨て札にもらう');
   const S2 = G({ hands: [['tatenaoshi', 'gold', 'copper', 'copper', 'copper']] }); play(S2, 'tatenaoshi'); A_(S2, 0, selCards(S2, 0, ['gold'])); A_(S2, 0, { c: 'gold' }); ok(S2.P[0].disc.includes('gold'), '同じカードやもっと安いものでもよい');
   const S3 = G({ hands: [['tatenaoshi']], decks: [[]], discs: [[]] }); play(S3, 'tatenaoshi'); eq([S3.phase, S3.trash.length], ['buy', 0], '手札がなければ何もしない');
   const S4 = G({ hands: [['tatenaoshi', 'curse']] }); play(S4, 'tatenaoshi'); eq(S4.trash, ['curse'], '1枚しかなければ自動で追放（義務）'); ok(S4.need.k === 'supply' && S4.need.max === 2, '呪い→💰2 以下');
 }
-{ // 鍛冶場は上でテスト済み。謁見の間
+{ // 鉄打ち場は上でテスト済み。謁見の間
   const S = G({ hands: [['ekken', 'shukuba', 'copper', 'copper', 'copper']], decks: [['shoryo', 'shoryo', 'gold']] });
   play(S, 'ekken'); A_(S, 0, selCards(S, 0, ['shukuba'])); eq([S.actions, S.P[0].hand.length], [4, 5], '謁見の間×宿場町：⚡4・🃏+2（ルールブックの例）');
-  const S2 = G({ hands: [['ekken', 'kajiba', 'copper', 'copper', 'copper']], decks: [['shoryo', 'shoryo', 'gold', 'silver', 'copper', 'copper', 'shoryo']] });
-  play(S2, 'ekken'); A_(S2, 0, selCards(S2, 0, ['kajiba'])); eq(S2.P[0].hand.length, 9, '謁見の間×鍛冶場：🃏+6');
+  const S2 = G({ hands: [['ekken', 'tetsuuchi', 'copper', 'copper', 'copper']], decks: [['shoryo', 'shoryo', 'gold', 'silver', 'copper', 'copper', 'shoryo']] });
+  play(S2, 'ekken'); A_(S2, 0, selCards(S2, 0, ['tetsuuchi'])); eq(S2.P[0].hand.length, 9, '謁見の間×鉄打ち場：🃏+6');
   const S3 = G({ hands: [['ekken', 'copper', 'copper', 'copper', 'copper']] }); play(S3, 'ekken'); eq(S3.phase, 'buy', 'ほかにアクションがなければ何もしない');
-  const S4 = G({ hands: [['ekken', 'kajiba', 'copper', 'copper', 'copper']] }); play(S4, 'ekken'); A_(S4, 0, { sel: [] }); eq(S4.P[0].hand.includes('kajiba'), true, '使わないこともできる（第2版：してもよい）');
-  const S5 = G({ hands: [['ekken', 'ekken', 'shukuba', 'kajiba', 'copper']], decks: [['shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo']] });
+  const S4 = G({ hands: [['ekken', 'tetsuuchi', 'copper', 'copper', 'copper']] }); play(S4, 'ekken'); A_(S4, 0, { sel: [] }); eq(S4.P[0].hand.includes('tetsuuchi'), true, '使わないこともできる（第2版：してもよい）');
+  const S5 = G({ hands: [['ekken', 'ekken', 'shukuba', 'tetsuuchi', 'copper']], decks: [['shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'shoryo']] });
   play(S5, 'ekken'); A_(S5, 0, selCards(S5, 0, ['ekken'])); eq(S5.need.why, 'ekken', '謁見の間×謁見の間：1回目のアクションを選ぶ');
   A_(S5, 0, selCards(S5, 0, ['shukuba'])); eq(S5.need.why, 'ekken', '2回目は別のアクションを選ぶ');
-  A_(S5, 0, selCards(S5, 0, ['kajiba'])); eq([S5.actions, S5.P[0].hand.length], [4, 1 + 2 + 6], '宿場町×2・鍛冶場×2（1枚を4回ではない）');
+  A_(S5, 0, selCards(S5, 0, ['tetsuuchi'])); eq([S5.actions, S5.P[0].hand.length], [4, 1 + 2 + 6], '宿場町×2・鉄打ち場×2（1枚を4回ではない）');
   const S6 = G({ hands: [['ekken', 'ekken', 'copper', 'copper', 'copper']] }); play(S6, 'ekken'); A_(S6, 0, selCards(S6, 0, ['ekken'])); eq(S6.phase, 'buy', '謁見の間×謁見の間で次に使うアクションがない → 何もなし');
 }
 { // 野盗
@@ -215,11 +215,11 @@ console.log('■ 各カード');
   play(S, 'bazaar'); eq([S.actions, S.buys, S.coins, S.P[0].hand.length], [1, 2, 1, 6], 'バザール：🃏+1 ⚡+1 🛒+1 💰+1');
 }
 { // 写本室
-  const S = G({ hands: [['shahon', 'copper', 'copper', 'shoryo']], decks: [['shukuba', 'silver', 'kajiba', 'gold', 'shoryo', 'copper']] });
+  const S = G({ hands: [['shahon', 'copper', 'copper', 'shoryo']], decks: [['shukuba', 'silver', 'tetsuuchi', 'gold', 'shoryo', 'copper']] });
   play(S, 'shahon'); eq([S.need.why, S.need.c], ['shahon', 'shukuba'], '写本室：アクションを引いたら よけるか聞く');
   A_(S, 0, { y: true }); eq(S.P[0].aside, ['shukuba'], 'よけたカードは脇に（公開）');
-  eq(S.need.c, 'kajiba', '次のアクションでも聞く'); A_(S, 0, { y: false });
-  eq(cnt(S.P[0].hand), { copper: 2, shoryo: 2, silver: 1, kajiba: 1, gold: 1 }, '7枚になるまで');
+  eq(S.need.c, 'tetsuuchi', '次のアクションでも聞く'); A_(S, 0, { y: false });
+  eq(cnt(S.P[0].hand), { copper: 2, shoryo: 2, silver: 1, tetsuuchi: 1, gold: 1 }, '7枚になるまで');
   ok(S.P[0].disc.includes('shukuba') && !S.P[0].aside.length, '最後に よけたカードを捨て札へ');
   const S2 = G({ hands: [['shahon', 'copper', 'copper', 'shoryo']], decks: [['shukuba']], discs: [['silver', 'gold', 'copper', 'shoryo']] });
   play(S2, 'shahon'); A_(S2, 0, { y: true }); ok(!S2.P[0].hand.includes('shukuba') && S2.P[0].hand.length === 7 && S2.P[0].disc.includes('shukuba') && S2.P[0].disc.length === 1, '途中でシャッフルしても よけたカードは混ぜない');
@@ -257,7 +257,7 @@ console.log('■ 各カード');
 }
 console.log('■ 初版のカード');
 {
-  const K1 = ['takara', 'zaimu', 'daienkai', 'kanja', 'kaitou', 'sumiyaki', 'shukuba', 'kajiba', 'ekken', 'hanebashi'];
+  const K1 = ['takara', 'zaimu', 'daienkai', 'kanja', 'kaitou', 'sumiyaki', 'shukuba', 'tetsuuchi', 'ekken', 'hanebashi'];
   const S = G({ k: K1, hands: [['takara', 'shoryo', 'shoryo', 'shoryo', 'shoryo']], decks: [['shoryo', 'copper', 'shukuba', 'gold', 'silver']] });
   play(S, 'takara'); eq(cnt(S.P[0].hand), { shoryo: 4, copper: 1, gold: 1 }, '宝探し：貨幣2枚を手札に'); eq(S.P[0].disc, ['shoryo', 'shukuba'], 'ほかは捨て札'); eq(S.P[0].deck, ['silver'], '');
   const S1 = G({ k: K1, hands: [['takara', 'shoryo', 'shoryo', 'shoryo', 'shoryo']], decks: [['shoryo', 'copper']], discs: [['gold', 'hakuryo']] });
@@ -267,8 +267,8 @@ console.log('■ 初版のカード');
   const S3 = G({ k: K1, hands: [['daienkai', 'copper', 'shoryo', 'shoryo', 'shoryo']] });
   play(S3, 'daienkai'); eq(S3.trash, ['daienkai'], '大宴会：自分を追放'); A_(S3, 0, { c: 'hakuryo' }); ok(S3.P[0].disc.includes('hakuryo') && !S3.P[0].play.includes('daienkai'), '💰5 以下をもらう');
   const S4 = G({ k: K1, hands: [['ekken', 'daienkai', 'shoryo', 'shoryo', 'shoryo']] });
-  play(S4, 'ekken'); A_(S4, 0, selCards(S4, 0, ['daienkai'])); A_(S4, 0, { c: 'hakuryo' }); A_(S4, 0, { c: 'kajiba' });
-  eq(S4.trash, ['daienkai'], '謁見の間×大宴会：追放は1回だけ'); ok(S4.P[0].disc.includes('hakuryo') && S4.P[0].disc.includes('kajiba'), 'もらうのは2回');
+  play(S4, 'ekken'); A_(S4, 0, selCards(S4, 0, ['daienkai'])); A_(S4, 0, { c: 'hakuryo' }); A_(S4, 0, { c: 'tetsuuchi' });
+  eq(S4.trash, ['daienkai'], '謁見の間×大宴会：追放は1回だけ'); ok(S4.P[0].disc.includes('hakuryo') && S4.P[0].disc.includes('tetsuuchi'), 'もらうのは2回');
   const S5 = G({ k: K1, np: 3, hands: [['kanja', 'copper', 'shoryo', 'shoryo', 'shoryo'], null, ['hanebashi', 'copper', 'copper', 'copper', 'copper']], decks: [['silver', 'gold'], ['shoryo'], ['gold']] });
   play(S5, 'kanja'); eq([S5.need.p, S5.need.why], [2, 'hanebashi'], '間者は攻撃：跳ね橋を聞く'); A_(S5, 2, { y: true });
   eq([S5.need.who, S5.need.c], [0, 'gold'], '間者：自分から'); A_(S5, 0, { y: false }); eq(S5.P[0].deck[0], 'gold', '戻した');
@@ -305,9 +305,9 @@ console.log('■ 跳ね橋と攻撃');
 }
 console.log('■ シャッフル・山札まわり');
 {
-  const S = G({ hands: [['kajiba', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [['gold']], discs: [['silver']] });
-  play(S, 'kajiba'); eq(S.P[0].hand.length, 6, '足りなければシャッフルして引ける分だけ'); ok(S.ev.some(e => e.k === 'shuffle'), 'シャッフルを記録（公開）');
-  const S2 = G({ hands: [['kajiba', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [[]], discs: [[]] }); play(S2, 'kajiba'); eq(S2.P[0].hand.length, 4, '山札も捨て札もなければ引けない');
+  const S = G({ hands: [['tetsuuchi', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [['gold']], discs: [['silver']] });
+  play(S, 'tetsuuchi'); eq(S.P[0].hand.length, 6, '足りなければシャッフルして引ける分だけ'); ok(S.ev.some(e => e.k === 'shuffle'), 'シャッフルを記録（公開）');
+  const S2 = G({ hands: [['tetsuuchi', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [[]], discs: [[]] }); play(S2, 'tetsuuchi'); eq(S2.P[0].hand.length, 4, '山札も捨て札もなければ引けない');
   const S3 = G({ hands: [['copper', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [['gold', 'gold']], discs: [['silver', 'silver', 'silver']] });
   A_(S3, 0, { a: 'end' }); eq(cnt(S3.P[0].hand).gold, 2, '片付け：山札の残り2枚を引いてから…');
   eq(S3.P[0].hand.length, 5, '…捨て札（いま捨てた手札も含む）をシャッフルして残りを引く');
@@ -351,11 +351,11 @@ console.log('■ 情報もれ防止');
   ok(v.P.every(P => !('hand' in P) && !('deck' in P) && !('disc' in P)), 'ほかの人の手札・山札・捨て札の中身は送らない');
   ok(v.P.every(P => typeof P.nh === 'number' && typeof P.nd === 'number'), '枚数だけ');
   const s = JSON.stringify(L.viewFor(S, -1)); ok(L.viewFor(S, -1).hand === null, '観戦（-1）は手札なし');
-  const S2 = G({ hands: [['kajiba', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [['gold', 'silver', 'renkin', 'shanikusai']] }); play(S2, 'kajiba');
+  const S2 = G({ hands: [['tetsuuchi', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [['gold', 'silver', 'renkin', 'shanikusai']] }); play(S2, 'tetsuuchi');
   const d1 = L.viewFor(S2, 1).ev.filter(e => e.k === 'draw').pop(), d0 = L.viewFor(S2, 0).ev.filter(e => e.k === 'draw').pop();
   ok(d1.n === 3 && !d1.mine, '相手には引いた枚数だけ'); eq(d0.mine.cards, ['gold', 'silver', 'renkin'], '本人には中身');
   ok(!/shanikusai|"renkin"/.test(JSON.stringify(L.viewFor(S2, 1), (k, v) => k === 'own' ? undefined : v)), '引いたカード・山札の残りは相手のビューに一切出ない');
-  const S3 = G({ hands: [['meikou', 'copper', 'copper', 'shoryo', 'shoryo']] }); play(S3, 'meikou'); A_(S3, 0, { c: 'kajiba' }); A_(S3, 0, selCards(S3, 0, ['shoryo']));
+  const S3 = G({ hands: [['meikou', 'copper', 'copper', 'shoryo', 'shoryo']] }); play(S3, 'meikou'); A_(S3, 0, { c: 'tetsuuchi' }); A_(S3, 0, selCards(S3, 0, ['shoryo']));
   const t1 = L.viewFor(S3, 1).ev.filter(e => e.k === 'topdeck').pop(); ok(t1.n === 1 && !t1.mine && !t1.c, '名工で山札に置いたカードは相手には秘密');
 }
 { // 片付け：捨て札の一番上は場のカード（手札は隠せる）

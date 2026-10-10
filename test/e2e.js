@@ -62,7 +62,7 @@ const errors = []; const fail = m => { errors.push(m); console.log('  ✗', m); 
       if (st === 'over' || st === 'timeout') break;
       const g = (await view(p)).g, k = g.k;
       if (st === 'action') {
-        const i = g.hand.findIndex(c => ['shukuba', 'shanikusai', 'bazaar', 'renkin', 'kajiba', 'entaku', 'jikeidan', 'jujutsu', 'ryogae', 'ginzaiku'].includes(c));
+        const i = g.hand.findIndex(c => ['shukuba', 'shanikusai', 'bazaar', 'renkin', 'tetsuuchi', 'entaku', 'jikeidan', 'jujutsu', 'ryogae', 'ginzaiku'].includes(c));
         if (i >= 0 && g.actions > 0) {
           await p.tap(`#hand .cd[data-i="${i}"]`, { force: true }); await sleep(80);
           if (shots && !kinds.focus) { await p.screenshot({ path: SS + shots + '_action_focus.png' }); kinds.focus = 1; }
@@ -74,7 +74,7 @@ const errors = []; const fail = m => { errors.push(m); console.log('  ✗', m); 
           if (ti >= 0 && !kinds.oneTreasure) { await p.tap(`#hand .cd[data-i="${ti}"]`, { force: true }); kinds.oneTreasure = 1; }
           else await p.tap('#prompt [data-b="all"]');
         } else {
-          const want = ['oukan', 'gold', 'renkin', 'bazaar', 'shanikusai', 'kajiba', 'shukuba', 'silver'].find(c => g.supply[c] > 0 && window_cost(c) <= g.coins);
+          const want = ['oukan', 'gold', 'renkin', 'bazaar', 'shanikusai', 'tetsuuchi', 'shukuba', 'silver'].find(c => g.supply[c] > 0 && window_cost(c) <= g.coins);
           if (want && g.buys > 0) {
             await p.tap(`#supply .pile[data-c="${want}"]`, { force: true }); await sleep(120);
             if (shots && !kinds.buySheet) { await p.screenshot({ path: SS + shots + '_buy_sheet.png' }); kinds.buySheet = 1; }
@@ -91,7 +91,7 @@ const errors = []; const fail = m => { errors.push(m); console.log('  ✗', m); 
     }
     ok(`[${who}] ${turns} turns / ${steps} steps by real taps (${Object.entries(kinds).map(e => e[0] + (e[1] > 1 ? '×' + e[1] : '')).join('／')})`);
   }
-  const COST = { oukan: 8, gold: 6, renkin: 5, bazaar: 5, shanikusai: 5, kajiba: 4, shukuba: 3, silver: 3 };
+  const COST = { oukan: 8, gold: 6, renkin: 5, bazaar: 5, shanikusai: 5, tetsuuchi: 4, shukuba: 3, silver: 3 };
   function window_cost(c) { return COST[c]; }
   // 決まった判断で止めて（hold）画面を撮る
   async function capture(p, key, file, ms) {
@@ -158,7 +158,7 @@ const errors = []; const fail = m => { errors.push(m); console.log('  ✗', m); 
     await layout(p, 'game390-mid'); await p.screenshot({ path: SS + 'game_390_mid.png' });
     await p.tap('#logToggle'); await sleep(100); await p.screenshot({ path: SS + 'log_open.png' }); await p.tap('#logToggle');
     await p.tap('.pr[data-p="1"]'); await sleep(120); await p.screenshot({ path: SS + 'player_sheet.png' }); await p.tap('#choiceBox [data-b="closeCard"]');
-    await p.evaluate(() => { window.__ll.autoplay = true; window.__ll.buyList = ['oukan', 'gold', 'jujutsu', 'renkin', 'kajiba', 'jikeidan', 'silver']; });
+    await p.evaluate(() => { window.__ll.autoplay = true; window.__ll.buyList = ['oukan', 'gold', 'jujutsu', 'renkin', 'tetsuuchi', 'jikeidan', 'silver']; });
     const t0 = Date.now();
     const v = await playToEnd(p, 300000, async () => { await layout(p, 'game390-auto'); });
     if (v.phase !== 'end') fail('solo 390 game did not finish: ' + v.phase);
