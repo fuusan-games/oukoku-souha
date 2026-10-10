@@ -225,13 +225,13 @@ console.log('■ 各カード');
   play(S2, 'shahon'); A_(S2, 0, { y: true }); ok(!S2.P[0].hand.includes('shukuba') && S2.P[0].hand.length === 7 && S2.P[0].disc.includes('shukuba') && S2.P[0].disc.length === 1, '途中でシャッフルしても よけたカードは混ぜない');
   const S3 = G({ hands: [['shahon', 'copper', 'copper', 'shoryo', 'shoryo', 'shoryo', 'shoryo', 'copper']], decks: [['gold']] }); play(S3, 'shahon'); eq(S3.P[0].hand.length, 7, '最初から7枚なら引かない');
 }
-{ // 鉱脈
-  const S = G({ hands: [['koumyaku', 'copper', 'silver', 'shoryo', 'shoryo']] });
-  play(S, 'koumyaku'); A_(S, 0, selCards(S, 0, ['silver'])); eq(S.need.filter, 'treasure', '貨幣だけ'); ok(/もらえません/.test(L.act(S, 0, { c: 'renkin' })), 'アクションは不可');
-  A_(S, 0, { c: 'gold' }); ok(S.P[0].hand.includes('gold') && S.trash.includes('silver'), '鉱脈：銀貨→金貨を手札に');
+{ // 金脈さがし
+  const S = G({ hands: [['kinmyaku', 'copper', 'silver', 'shoryo', 'shoryo']] });
+  play(S, 'kinmyaku'); A_(S, 0, selCards(S, 0, ['silver'])); eq(S.need.filter, 'treasure', '貨幣だけ'); ok(/もらえません/.test(L.act(S, 0, { c: 'renkin' })), 'アクションは不可');
+  A_(S, 0, { c: 'gold' }); ok(S.P[0].hand.includes('gold') && S.trash.includes('silver'), '金脈さがし：銀貨→金貨を手札に');
   A_(S, 0, { a: 'all' }); eq(S.coins, 4, '手に入れた金貨をそのターンに使える');
-  const S2 = G({ hands: [['koumyaku', 'copper', 'shoryo', 'shoryo', 'shoryo']] }); play(S2, 'koumyaku'); A_(S2, 0, { sel: [] }); eq(S2.trash.length, 0, '追放しなくてもよい（第2版）');
-  const S3 = G({ hands: [['koumyaku', 'shoryo', 'shoryo', 'shoryo', 'shoryo']] }); play(S3, 'koumyaku'); eq(S3.phase, 'buy', '貨幣がなければ何もなし');
+  const S2 = G({ hands: [['kinmyaku', 'copper', 'shoryo', 'shoryo', 'shoryo']] }); play(S2, 'kinmyaku'); A_(S2, 0, { sel: [] }); eq(S2.trash.length, 0, '追放しなくてもよい（第2版）');
+  const S3 = G({ hands: [['kinmyaku', 'shoryo', 'shoryo', 'shoryo', 'shoryo']] }); play(S3, 'kinmyaku'); eq(S3.phase, 'buy', '貨幣がなければ何もなし');
 }
 { // 物見やぐら
   const S = G({ hands: [['monomi', 'copper', 'copper', 'shoryo', 'shoryo']], decks: [['silver', 'curse', 'shoryo', 'gold']] });

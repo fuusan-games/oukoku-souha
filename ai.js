@@ -94,7 +94,7 @@
   // 盤面から作戦の候補を作る
   function candidates(kingdom, np) {
     var k = kingdom, has = function (c) { return k.indexOf(c) >= 0; }, out = [bmu()];
-    var terms = ['jujutsu', 'tetsuuchi', 'entaku', 'shahon', 'jikeidan', 'ryogae', 'yatou', 'chozei', 'hanebashi', 'koumyaku', 'meikou', 'kosho', 'sumiyaki', 'zaimu', 'takara', 'tatenaoshi', 'kaitou', 'daikugoya'];
+    var terms = ['jujutsu', 'tetsuuchi', 'entaku', 'shahon', 'jikeidan', 'ryogae', 'yatou', 'chozei', 'hanebashi', 'kinmyaku', 'meikou', 'kosho', 'sumiyaki', 'zaimu', 'takara', 'tatenaoshi', 'kaitou', 'daikugoya'];
     terms.forEach(function (x) { if (!has(x)) return; out.push(bmx(x, 1)); if (DRAW[x] || x === 'jikeidan' || x === 'jujutsu') out.push(bmx(x, 2, { xFirst: x === 'jujutsu' })); });
     if (has('jujutsu')) out.push(bmx('jujutsu', 2, { xFirst: true, tag: 'agg', provAt: 15 }));
     ['renkin', 'bazaar', 'shanikusai', 'ginzaiku', 'monomi', 'hayauma', 'wanashi', 'kanja'].forEach(function (x) {
@@ -109,12 +109,12 @@
       if (has('zange')) out.push(engine(v, d, { k: k, trash: 'zange' }));
       ['jujutsu', 'jikeidan'].forEach(function (pay) { if (has(pay)) out.push(engine(v, d, { k: k, pay: pay, payMax: pay === 'jujutsu' ? 2 : 1 })); });
     }); });
-    if (has('zange')) ['jujutsu', 'renkin', 'bazaar', 'jikeidan', 'tetsuuchi', 'koumyaku'].forEach(function (x) { if (has(x)) out.push(zangePlan(x, { k: k, max: x === 'renkin' || x === 'bazaar' ? 6 : 2 })); });
+    if (has('zange')) ['jujutsu', 'renkin', 'bazaar', 'jikeidan', 'tetsuuchi', 'kinmyaku'].forEach(function (x) { if (has(x)) out.push(zangePlan(x, { k: k, max: x === 'renkin' || x === 'bazaar' ? 6 : 2 })); });
     if (has('yakusou')) ['daikugoya', 'sumiyaki'].forEach(function (w) { if (has(w)) out.push(yakusouRush(w)); });
     var seen = {}; return out.filter(function (pl) { if (seen[pl.id]) return false; seen[pl.id] = 1; return true; });
   }
   // 「強い」が選ぶ作戦（盤面を見た経験則）
-  var TERM_RANK = { jujutsu: 10, shahon: 7.6, tetsuuchi: 7.5, entaku: 7, jikeidan: 6.8, yatou: 5.6, ryogae: 6, meikou: 5.8, chozei: 5.4, koumyaku: 4.6, kosho: 5, takara: 4.9, hanebashi: 5.2, sumiyaki: 4.4, zaimu: 4.2, tatenaoshi: 4, kaitou: 2, daikugoya: 3 };
+  var TERM_RANK = { jujutsu: 10, shahon: 7.6, tetsuuchi: 7.5, entaku: 7, jikeidan: 6.8, yatou: 5.6, ryogae: 6, meikou: 5.8, chozei: 5.4, kinmyaku: 4.6, kosho: 5, takara: 4.9, hanebashi: 5.2, sumiyaki: 4.4, zaimu: 4.2, tatenaoshi: 4, kaitou: 2, daikugoya: 3 };
   function strongPlan(kingdom, np) {
     var has = function (c) { return kingdom.indexOf(c) >= 0; };
     if (has('jujutsu')) return has('renkin') ? bmn('renkin', { t: 'jujutsu', tmax: 2 }) : bmx('jujutsu', 2, { xFirst: true });
@@ -134,7 +134,7 @@
   }
 
   // ================= カードの価値（判断用の目安） =================
-  var AV = { jujutsu: 4.2, renkin: 3.4, bazaar: 3.3, shanikusai: 3.1, tetsuuchi: 3.2, shahon: 3.2, entaku: 3.1, jikeidan: 3, monomi: 3, meikou: 3.4, koumyaku: 2.6, yatou: 2.9, ginzaiku: 2.4, hayauma: 2.3, wanashi: 2.3,
+  var AV = { jujutsu: 4.2, renkin: 3.4, bazaar: 3.3, shanikusai: 3.1, tetsuuchi: 3.2, shahon: 3.2, entaku: 3.1, jikeidan: 3, monomi: 3, meikou: 3.4, kinmyaku: 2.6, yatou: 2.9, ginzaiku: 2.4, hayauma: 2.3, wanashi: 2.3,
     ryogae: 2.6, tatenaoshi: 2.2, ekken: 2.5, shukuba: 2.2, zange: 2, daikugoya: 1.9, chozei: 2.3, kosho: 2.2, monooki: 1.5, hanebashi: 1.9, takara: 2.8, zaimu: 2, daienkai: 1.6, kanja: 1.9, kaitou: 1.4, sumiyaki: 2 };
   function late(K) { return Math.max(0, Math.min(1, (K.P0 - K.P) / K.P0 * 1.3 + (K.empty >= 2 ? 0.4 : 0))); }
   function cv(K, c, pl) {
@@ -213,7 +213,7 @@
     if (pl.a >= 2) return terms >= acts || others.some(function (x) { return DRAW[x]; }) ? 92 + (pl.m ? 1 : 0) : 70;
     if (pl.a === 1) return { renkin: 88, bazaar: 87, monomi: 86, ginzaiku: 85, hayauma: 84, wanashi: 83, kanja: 82, monooki: others.some(function (x) { return isA(x, 'victory') || x === 'curse'; }) ? 80 : 20 }[c] || 80;
     var v = { jujutsu: K.supply.curse > 0 ? 66 : 48, meikou: 60, tetsuuchi: 56, entaku: 55, shahon: 40 + 3 * Math.max(0, 7 - others.length), jikeidan: 54, yatou: 52, ryogae: others.indexOf('copper') >= 0 ? 52 : 4,
-      koumyaku: others.some(function (x) { return x === 'silver' || x === 'copper'; }) ? 47 : 4, chozei: 46, zange: 58, tatenaoshi: 30, daikugoya: 38, kosho: 44, hanebashi: 42, sumiyaki: 43, zaimu: 41, daienkai: 45, takara: 50, kaitou: 35 }[c] || 30;
+      kinmyaku: others.some(function (x) { return x === 'silver' || x === 'copper'; }) ? 47 : 4, chozei: 46, zange: 58, tatenaoshi: 30, daikugoya: 38, kosho: 44, hanebashi: 42, sumiyaki: 43, zaimu: 41, daienkai: 45, takara: 50, kaitou: 35 }[c] || 30;
     if (acts >= 2 && DRAW[c]) v += 10;
     return v;
   }
@@ -303,7 +303,7 @@
     }
     if (w === 'zange') return trashChoices(K, hand, 4, pl, 'zange');
     if (w === 'ryogae') return elig.length ? [elig[0]] : [];
-    if (w === 'koumyaku') {
+    if (w === 'kinmyaku') {
       var s = hand.indexOf('silver'), c = hand.indexOf('copper');
       if (s >= 0 && K.supply.gold) return [s]; if (c >= 0 && K.supply.silver && !pl.yakusou) return [c]; return [];
     }
@@ -394,7 +394,7 @@
     rnd = rnd || Math.random;
     var nd = S.need; if (!nd || nd.p !== p) return null;
     if (lv === 'weak') {   // 弱い：買い物とアクションはほぼ気まぐれ。カードの細かい判断は半分くらい まとも（懺悔室・建て直しは まとも）
-      if (nd.k === 'action' || nd.k === 'buy' || (rnd() < 0.45 && ['zange', 'tatenaoshi', 'koumyaku', 'ryogae', 'ekken'].indexOf(nd.why) < 0)) return decideWeak(S, p, nd, rnd);
+      if (nd.k === 'action' || nd.k === 'buy' || (rnd() < 0.45 && ['zange', 'tatenaoshi', 'kinmyaku', 'ryogae', 'ekken'].indexOf(nd.why) < 0)) return decideWeak(S, p, nd, rnd);
       return decideSmart(S, p, nd, 'weak', pl && pl.rules && pl.rules.length ? pl : WEAKPL);
     }
     return decideSmart(S, p, nd, lv, pl);

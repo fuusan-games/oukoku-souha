@@ -197,7 +197,7 @@ const errors = []; const fail = m => { errors.push(m); console.log('  ✗', m); 
     await p.tap('#soloBtn'); await p.waitForSelector('#lobby.active');
     await p.tap('#npSeg button[data-v="4"]'); await p.tap('#lvAllSeg button[data-v="strong"]');
     await p.tap('#kmodeSeg button[data-v="custom"]');
-    for (const c of ['monooki', 'zange', 'hayauma', 'tatenaoshi', 'ekken', 'monomi', 'koumyaku', 'meikou', 'shahon', 'jikeidan']) await p.tap(`#customGrid [data-c="${c}"]`);
+    for (const c of ['monooki', 'zange', 'hayauma', 'tatenaoshi', 'ekken', 'monomi', 'kinmyaku', 'meikou', 'shahon', 'jikeidan']) await p.tap(`#customGrid [data-c="${c}"]`);
     await waitV(p, 'v.opts.np === 4 && v.opts.pick.length === 10');
     await layout(p, 'lobby375');
     await p.tap('#startBtn'); await waitV(p, 'v.phase === "game" && v.g.wait === 0');
@@ -210,7 +210,7 @@ const errors = []; const fail = m => { errors.push(m); console.log('  ✗', m); 
     if (!hub || !(await p.isVisible('#rulesModal'))) fail('⋯ menu: rules / ひろば not reachable'); else ok('⋯ menu has 🏠 ひろばへ and あそびかた during play');
     await p.screenshot({ path: SS + 'rules_375.png' }); await p.tap('#rulesClose');
     await humanTurns(p, 'solo375', 2, 'se');
-    await p.evaluate(() => { window.__ll.autoplay = true; window.__ll.buyList = ['oukan', 'gold', 'monomi', 'meikou', 'shahon', 'ekken', 'hayauma', 'tatenaoshi', 'zange', 'monooki', 'jikeidan', 'koumyaku', 'silver']; window.__ll.buyAny = true; window.__ll.hold = ['hand:jikeidan', 'monomi', 'pick:hayauma', 'hand:ekken', 'hand:monooki', 'supply:meikou', 'yn:shahon']; });
+    await p.evaluate(() => { window.__ll.autoplay = true; window.__ll.buyList = ['oukan', 'gold', 'monomi', 'meikou', 'shahon', 'ekken', 'hayauma', 'tatenaoshi', 'zange', 'monooki', 'jikeidan', 'kinmyaku', 'silver']; window.__ll.buyAny = true; window.__ll.hold = ['hand:jikeidan', 'monomi', 'pick:hayauma', 'hand:ekken', 'hand:monooki', 'supply:meikou', 'yn:shahon']; });
     const want = { 'hand:jikeidan': 'panel_jikeidan_375.png', monomi: 'panel_monomi_375.png', 'pick:hayauma': 'panel_hayauma_375.png', 'hand:ekken': 'panel_ekken_375.png', 'hand:monooki': 'panel_monooki_375.png', 'supply:meikou': 'panel_meikou_375.png', 'yn:shahon': 'panel_shahon_375.png' };
     const got = []; const t0 = Date.now();
     while (Date.now() - t0 < 240000) {

@@ -16,14 +16,14 @@
 
   // ---- おすすめの王国（公式ルールブックの推奨セットと同じ10種。セット名はこちらで付けた日本語） ----
   var SETS = [
-    { id: 'first', n: 'はじめての王国', ed: 2, k: ['monooki', 'bazaar', 'ginzaiku', 'jikeidan', 'koumyaku', 'hanebashi', 'tatenaoshi', 'tetsuuchi', 'shukuba', 'daikugoya'] },
+    { id: 'first', n: 'はじめての王国', ed: 2, k: ['monooki', 'bazaar', 'ginzaiku', 'jikeidan', 'kinmyaku', 'hanebashi', 'tatenaoshi', 'tetsuuchi', 'shukuba', 'daikugoya'] },
     { id: 'size', n: 'ちぐはぐな大きさ', ed: 2, k: ['meikou', 'yatou', 'chozei', 'zange', 'shanikusai', 'yakusou', 'monomi', 'ekken', 'jujutsu', 'daikugoya'] },
     { id: 'decktop', n: '山札のてっぺん', ed: 2, k: ['meikou', 'chozei', 'entaku', 'shanikusai', 'hayauma', 'renkin', 'ryogae', 'monomi', 'kosho', 'shukuba'] },
     { id: 'sleight', n: '手さばき', ed: 2, k: ['monooki', 'entaku', 'shanikusai', 'yakusou', 'hayauma', 'shahon', 'jikeidan', 'wanashi', 'tetsuuchi', 'ekken'] },
-    { id: 'improve', n: '改良の日々', ed: 2, k: ['meikou', 'monooki', 'bazaar', 'ginzaiku', 'koumyaku', 'hanebashi', 'ryogae', 'wanashi', 'tatenaoshi', 'jujutsu'] },
-    { id: 'silvergold', n: '銀と金', ed: 2, k: ['yatou', 'chozei', 'zange', 'hayauma', 'renkin', 'ginzaiku', 'koumyaku', 'ryogae', 'ekken', 'kosho'] },
-    { id: 'first1', n: 'はじめての王国（初版）', ed: 1, k: ['monooki', 'bazaar', 'jikeidan', 'koumyaku', 'hanebashi', 'tatenaoshi', 'tetsuuchi', 'shukuba', 'sumiyaki', 'daikugoya'] },
-    { id: 'bigmoney1', n: '大金持ち（初版）', ed: 1, k: ['takara', 'chozei', 'zaimu', 'zange', 'daienkai', 'renkin', 'bazaar', 'koumyaku', 'ryogae', 'ekken'] },
+    { id: 'improve', n: '改良の日々', ed: 2, k: ['meikou', 'monooki', 'bazaar', 'ginzaiku', 'kinmyaku', 'hanebashi', 'ryogae', 'wanashi', 'tatenaoshi', 'jujutsu'] },
+    { id: 'silvergold', n: '銀と金', ed: 2, k: ['yatou', 'chozei', 'zange', 'hayauma', 'renkin', 'ginzaiku', 'kinmyaku', 'ryogae', 'ekken', 'kosho'] },
+    { id: 'first1', n: 'はじめての王国（初版）', ed: 1, k: ['monooki', 'bazaar', 'jikeidan', 'kinmyaku', 'hanebashi', 'tatenaoshi', 'tetsuuchi', 'shukuba', 'sumiyaki', 'daikugoya'] },
+    { id: 'bigmoney1', n: '大金持ち（初版）', ed: 1, k: ['takara', 'chozei', 'zaimu', 'zange', 'daienkai', 'renkin', 'bazaar', 'kinmyaku', 'ryogae', 'ekken'] },
     { id: 'interaction1', n: 'ふれあい（初版）', ed: 1, k: ['chozei', 'zaimu', 'entaku', 'shanikusai', 'shahon', 'jikeidan', 'hanebashi', 'kanja', 'kaitou', 'shukuba'] },
     { id: 'size1', n: 'ちぐはぐな大きさ（初版）', ed: 1, k: ['monooki', 'zange', 'daienkai', 'yakusou', 'renkin', 'kaitou', 'shukuba', 'jujutsu', 'sumiyaki', 'daikugoya'] },
     { id: 'square1', n: '宿場の広場（初版）', ed: 1, k: ['chozei', 'monooki', 'shanikusai', 'shahon', 'bazaar', 'tatenaoshi', 'tetsuuchi', 'ekken', 'shukuba', 'sumiyaki'] }
@@ -302,11 +302,11 @@
       if (aside.length) { aside.forEach(function (c) { P.aside.splice(P.aside.indexOf(c), 1); P.disc.push(c); }); ev(S, { k: 'discard', p: p, n: aside.length, top: aside[aside.length - 1], open: aside.slice(), why: 'shahon' }); }
     },
     bazaar: function* () {},
-    koumyaku: function* (S, p) {
-      var sel = yield* pickHand(S, p, { min: 0, max: 1, filter: 'treasure', why: 'koumyaku' });
+    kinmyaku: function* (S, p) {
+      var sel = yield* pickHand(S, p, { min: 0, max: 1, filter: 'treasure', why: 'kinmyaku' });
       if (!sel.length) return;
-      var c = takeIdx(S.P[p].hand, sel)[0]; trashCards(S, p, [c], 'koumyaku');
-      yield* gainUpTo(S, p, cost(c) + 3, 'treasure', 'hand', 'koumyaku');
+      var c = takeIdx(S.P[p].hand, sel)[0]; trashCards(S, p, [c], 'kinmyaku');
+      yield* gainUpTo(S, p, cost(c) + 3, 'treasure', 'hand', 'kinmyaku');
     },
     monomi: function* (S, p) {
       var P = S.P[p], cards = takeTop(S, p, 2); if (!cards.length) return;

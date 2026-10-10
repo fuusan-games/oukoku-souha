@@ -76,10 +76,10 @@ var WHY_HAND = {
   wanashi: function (n) { return '🪤罠師：捨てるカードを <b>' + n.min + '枚</b> 選ぶ'; },
   tatenaoshi: function () { return '🏗️建て直し：追放するカードを1枚選ぶ'; },
   ekken: function () { return '👑謁見の間：<b>2回</b> 使うアクションカードを選ぶ（しなくてもOK）'; },
-  koumyaku: function () { return '⛏️鉱脈：追放する貨幣を選ぶ（しなくてもOK）'; },
+  kinmyaku: function () { return '⛏️金脈さがし：追放する貨幣を選ぶ（しなくてもOK）'; },
   meikou: function () { return '🏺名工：山札の上に置くカードを1枚選ぶ'; }
 };
-var WHY_SUP = { daikugoya: '🪚大工小屋', tatenaoshi: '🏗️建て直し', koumyaku: '⛏️鉱脈', meikou: '🏺名工', daienkai: '🍗大宴会' };
+var WHY_SUP = { daikugoya: '🪚大工小屋', tatenaoshi: '🏗️建て直し', kinmyaku: '⛏️金脈さがし', meikou: '🏺名工', daienkai: '🍗大宴会' };
 function promptText(g, nd) {
   if (nd.k === 'hand') return (WHY_HAND[nd.why] || function () { return 'カードを選ぶ'; })(nd);
   if (nd.k === 'supply') return (WHY_SUP[nd.why] || '') + '：<b>💰' + nd.max + ' 以下</b>の' + (nd.filter === 'treasure' ? '貨幣' : 'カード') + 'を' + (nd.dest === 'hand' ? '<b>手札に</b>' : '') + 'もらう（光っている山をタップ）';
