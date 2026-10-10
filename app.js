@@ -18,7 +18,11 @@ function rerender() { if (lastView) render(lastView); }
 // ---- 手札 ----
 $('hand').addEventListener('click', function (e) {
   var el = e.target.closest('.cd[data-i]'); if (!el) return;
-  var g = lastView.g, i = +el.dataset.i, c = g.hand[i], nd = g.need;
+  if (Date.now() - swipedAt < 400) return;   // スワイプの直後のクリックは無視
+  handTap(+el.dataset.i);
+});
+function handTap(i) {
+  var g = lastView.g, c = g.hand[i], nd = g.need;
   if (!myNeed(g)) return openCard(c);
   if (nd.k === 'action') {
     if (!L.isA(c, 'action') || g.actions < 1) return openCard(c);
@@ -31,7 +35,44 @@ $('hand').addEventListener('click', function (e) {
     if (j >= 0) ui.sel.splice(j, 1); else if (nd.max === 1) ui.sel = [i]; else if (ui.sel.length < nd.max) ui.sel.push(i); else toast(nd.max + '枚までです');
     rerender();
   } else openCard(c);
+}
+// 上にスワイプ（ドラッグ）して使う：アクションは確認なしで使う・財宝は出す・選ぶ場面では選ぶ
+function handSwipe(i) {
+  var g = lastView && lastView.g; if (!g || !myNeed(g)) return false;
+  var c = g.hand[i], nd = g.need;
+  if (nd.k === 'action' && L.isA(c, 'action') && g.actions > 0) { ui.focus = -1; act({ a: 'play', i: i }); return true; }
+  if (nd.k === 'buy' && !g.bought && L.isA(c, 'treasure')) { act({ a: 'treasure', i: i }); return true; }
+  if (nd.k === 'hand' && L.matches(c, nd.filter)) { if (ui.sel.indexOf(i) < 0) handTap(i); return true; }
+  return false;
+}
+var drag = null, swipedAt = 0;
+$('hand').addEventListener('pointerdown', function (e) {
+  var el = e.target.closest('.cd[data-i]'); if (!el || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  drag = { el: el, i: +el.dataset.i, x0: e.clientX, y0: e.clientY, id: e.pointerId, moved: false, base: getComputedStyle(el).transform };
 });
+document.addEventListener('pointermove', function (e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+  if (!drag.moved) {
+    if (Math.abs(dy) < 10 || Math.abs(dy) < Math.abs(dx)) { if (Math.abs(dx) > 14) drag = null; return; }   // 横の動きは手札のスクロールに任せる
+    drag.moved = true; drag.el.classList.add('drag');
+    try { drag.el.setPointerCapture(e.pointerId); } catch (er) { }
+  }
+  var up = Math.min(0, dy);
+  drag.el.style.transform = 'translate(' + dx * 0.35 + 'px,' + up + 'px) rotate(0deg) scale(' + (1 + Math.min(0.12, -up / 600)) + ')';
+  drag.el.classList.toggle('armed', up < -45);
+});
+function endDrag(e, cancel) {
+  if (!drag || (e && e.pointerId !== drag.id)) return;
+  var d = drag; drag = null;
+  if (!d.moved) return;
+  swipedAt = Date.now();
+  var dy = e ? e.clientY - d.y0 : 0;
+  d.el.classList.remove('drag', 'armed'); d.el.style.transform = '';
+  if (!cancel && dy < -45) { if (!handSwipe(d.i)) toast('このカードは今は使えません'); }
+}
+document.addEventListener('pointerup', function (e) { endDrag(e, false); });
+document.addEventListener('pointercancel', function (e) { endDrag(e, true); });
 // ---- 案内のボタン ----
 $('prompt').addEventListener('click', function (e) {
   var b = e.target.closest('button[data-b]'); if (!b || b.disabled) return;
@@ -47,8 +88,10 @@ $('prompt').addEventListener('click', function (e) {
   } else if (k === 'handOk') act({ sel: ui.sel.slice() });
 });
 // ---- 供給 ----
-$('supply').addEventListener('click', function (e) {
+document.addEventListener('click', function (e) {
   if (e.target.closest('#trashBtn')) { var g0 = lastView.g; ui.cardSheet = 'trash'; ui.sheetCtx = null; $('choiceBox').innerHTML = '<h4 style="margin:0 0 6px">🗑️ 追放置き場（' + g0.trash.length + '枚）</h4><div class="deck">' + (g0.trash.length ? countsHtml(L.counts(g0.trash)) : 'まだ ありません') + '</div><div class="row" style="margin-top:10px">' + btn('closeCard', 'とじる') + '</div>'; overlay('choiceSheet', true); return; }
+});
+$('supply').addEventListener('click', function (e) {
   var t = e.target.closest('.pile[data-c]'); if (!t) return;
   var g = lastView.g, c = t.dataset.c, nd = g.need;
   if (myNeed(g) && nd.k === 'buy' && g.buys > 0 && g.supply[c] > 0 && D[c].cost <= canBuyList(g).max) return openCard(c, 'buy');
@@ -79,14 +122,18 @@ $('choiceBox').addEventListener('click', function (e) {
   }
 });
 $('choiceSheet').addEventListener('click', function (e) { if (e.target === this && ui.cardSheet) { ui.cardSheet = false; overlay('choiceSheet', false); rerender(); } });
-$('players').addEventListener('click', function (e) {
-  var pr = e.target.closest('.pr[data-p]'); if (!pr) return;
+function playerClick(e) {
+  var pr = e.target.closest('[data-p]'); if (!pr || !lastView || !lastView.g) return;
   var g = lastView.g, p = +pr.dataset.p, P = g.P[p];
   ui.cardSheet = 'player'; ui.sheetCtx = null;
   $('choiceBox').innerHTML = '<h4 style="margin:0 0 4px">' + pface(g, p) + ' ' + esc(pname(g, p)) + '</h4><div class="sm2">★' + P.vp + '・持っているカード ' + P.total + '枚（手札' + P.nh + '・山札' + P.nd + '）・' + P.turns + '手番' + (g.owners[p].kind === 'cpu' ? '・' + LV[g.owners[p].lv] : '') + '</div>' +
     '<div class="deck">' + countsHtml(P.own) + '</div><p class="hint">持っているカードの内訳は、もらった・追放したカードが全員に見えるので公開しています（並び・手札の中身は秘密）。</p><div class="row">' + btn('closeCard', 'とじる') + '</div>';
   overlay('choiceSheet', true);
-});
+}
+$('players').addEventListener('click', playerClick);
+$('oppBar').addEventListener('click', playerClick);
+$('counters').addEventListener('click', function (e) { if (!e.target.closest('#trashBtn')) playerClick(e); });
+$('logBtnL').onclick = function () { $('logToggle').onclick(); };
 $('logToggle').onclick = function () { ui.logOpen = !ui.logOpen; document.body.classList.toggle('logOpen', ui.logOpen); var l = $('log'); l.scrollTop = l.scrollHeight; };
 // ---- ホストのロビー操作 ----
 $('seatList').addEventListener('click', function (e) {
@@ -234,6 +281,25 @@ document.addEventListener('touchmove', function (e) {
   e.preventDefault();
 }, { passive: false });
 document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+// ---- 画面の向き：横長（スマホの横向き・PCの広い画面）は横画面のゲーム盤 ----
+var rotHintDone = false;
+function applyMode() {
+  var w = window.innerWidth, h = window.innerHeight, land = w > h * 1.15 && w >= 560;
+  if (Q.has('portrait')) land = false; if (Q.has('land')) land = true;
+  var was = document.body.classList.contains('land');
+  document.body.classList.toggle('land', land);
+  document.body.style.setProperty('--s', Math.max(0.82, Math.min(2.1, h / 390, w / 760)).toFixed(3));
+  document.body.style.setProperty('--sv', Math.max(0.82, Math.min(2.1, h / 390, w / 600)).toFixed(3));
+  if (was !== land) { ui.focus = -1; rerender(); } else fanHand();
+  maybeRotHint();
+}
+function maybeRotHint() {   // スマホを縦で遊んでいるときに一度だけ「横向きがおすすめ」
+  if (rotHintDone || document.body.classList.contains('land') || window.innerWidth > 520 || !lastView || lastView.phase !== 'game') return;
+  rotHintDone = true; var r = $('rotHint'); r.classList.remove('on'); void r.offsetWidth; r.classList.add('on');
+}
+window.addEventListener('resize', applyMode);
+window.addEventListener('orientationchange', function () { setTimeout(applyMode, 120); });
+applyMode();
 // タイトルのカード
 $('titleFan').innerHTML = cardHtml('shukuba') + cardHtml('gold') + '<span class="who">🐻<br>🐰</span>' + cardHtml('oukan') + cardHtml('jujutsu');
 // テスト用：自動で選ぶ（window.__ll.autoplay = true）。見えている情報だけで単純に判断

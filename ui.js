@@ -10,7 +10,7 @@ function render(v) {
   lastView = v; window.__ll.view = v;
   if (v.notice && v.notice.id !== ui.lastNotice) { ui.lastNotice = v.notice.id; if (v.notice.msg) toast(v.notice.msg); }
   if (v.phase === 'lobby') { show('lobby'); renderLobby(v); }
-  else if (v.phase === 'game' && v.g) { show('game'); renderGame(v); }
+  else if (v.phase === 'game' && v.g) { show('game'); renderGame(v); if (typeof maybeRotHint === 'function') maybeRotHint(); }
   else if (v.phase === 'end' && v.g) { show('end'); renderEnd(v); }
   BGM.want(v.phase === 'game' && v.g && v.g.ultra ? 'epic' : 'normal'); BGM.sync();
 }
@@ -106,12 +106,26 @@ function renderGame(v) {
     return '<div class="' + cls + '" data-p="' + p + '"><div class="pn"><span class="fc">' + pface(g, p) + '</span>' + esc(p === g.me ? 'あなた' : o.name) + (g.thinking === p ? '<span class="think">…</span>' : '') + '</div>' +
       '<div class="pst"><b class="vp">★' + P.vp + '</b><span title="手札">✋' + P.nh + '</span><span title="山札">🂠' + P.nd + '</span><span class="dtop" title="捨て札の一番上">' + (P.top ? cemo(P.top) : '·') + '</span></div></div>';
   }).join('');
+  // 横画面：上のバーに相手の状態（顔・★・手札・山札）
+  $('oppBar').innerHTML = g.P.map(function (P, p) {
+    if (p === g.me && g.me >= 0) return '';
+    var o = g.owners[p], cls = 'op' + (p === cur && !g.over ? ' cur' : '') + (o.kind === 'cpu' && o.lv === 'ultra' ? ' ultra' : '') + (o.connected ? '' : ' off');
+    return '<button class="' + cls + '" data-p="' + p + '"><span class="fc">' + pface(g, p) + '</span><span class="on"><b>' + esc(o.name) + (g.thinking === p ? '<i class="think">…</i>' : '') + '</b><span><em>★' + P.vp + '</em> ✋' + P.nh + ' 🂠' + P.nd + '</span></span></button>';
+  }).join('');
   // 供給
   renderSupply(g, mine);
   // 場とカウンター
   var Pc = g.P[cur];
-  $('playArea').innerHTML = (Pc.play.length ? minisOf(Pc.play) : '<span class="none">場：まだ何も出ていません</span>') + (Pc.aside.length ? '<span class="aside">脇：' + minisOf(Pc.aside) + '</span>' : '');
-  $('counters').innerHTML = '<span title="アクション">⚡' + (g.phase === 'action' ? g.actions : 0) + '</span><span title="購入">🛒' + g.buys + '</span><span class="coin" title="お金">💰' + g.coins + '</span>';
+  if (isLand()) {
+    $('playArea').innerHTML = (Pc.play.length ? '<div class="pcards">' + Pc.play.map(function (c) { return cardHtml(c, 'sm'); }).join('') + '</div>' : '') + (Pc.aside.length ? '<span class="aside">脇：' + minisOf(Pc.aside) + '</span>' : '');
+    var Pm = g.me >= 0 ? g.P[g.me] : null;
+    $('counters').innerHTML = '<div class="tok"><span class="tk ta" title="アクション"><b>' + (g.phase === 'action' ? g.actions : 0) + '</b><small>アクション</small></span><span class="tk tb" title="購入"><b>' + g.buys + '</b><small>購入</small></span><span class="tk tc" title="コイン"><b>' + g.coins + '</b><small>コイン</small></span></div>' +
+      (Pm ? '<div class="mypiles"><button class="pl mydeck" data-p="' + g.me + '">' + cardHtml(null, 'xs') + '<b>' + Pm.nd + '</b><small>山札</small></button><button class="pl mydisc" data-p="' + g.me + '">' + (Pm.top ? cardHtml(Pm.top, 'xs') : '<span class="cd xs emptyd"></span>') + '<b>' + (Pm.ndisc || 0) + '</b><small>捨て札</small></button>' +
+        '<button class="pl" id="trashBtn">' + '<span class="cd xs trashC">🗑️</span><b>' + g.trash.length + '</b><small>追放</small></button></div><div class="mevp" data-p="' + g.me + '">' + pface(g, g.me) + ' あなた <b>★' + Pm.vp + '</b></div>' : '');
+  } else {
+    $('playArea').innerHTML = (Pc.play.length ? minisOf(Pc.play) : '<span class="none">場：まだ何も出ていません</span>') + (Pc.aside.length ? '<span class="aside">脇：' + minisOf(Pc.aside) + '</span>' : '');
+    $('counters').innerHTML = '<span title="アクション">⚡' + (g.phase === 'action' ? g.actions : 0) + '</span><span title="購入">🛒' + g.buys + '</span><span class="coin" title="お金">💰' + g.coins + '</span>';
+  }
   // ログ
   renderLog(g);
   // CPU のセリフ
@@ -126,13 +140,14 @@ function renderSupply(g, mine) {
   var nd = g.need, ks = L.sortK(g.kingdom), base = ['copper', 'silver', 'gold', 'shoryo', 'hakuryo', 'oukan', 'curse'];
   var b = mine && nd.k === 'buy' && g.buys > 0 ? canBuyList(g) : null;
   function tile(c, big) {
-    var n = g.supply[c], cls = 'pile ' + ccls(c) + (n ? '' : ' empty'), cost = D[c].cost;
+    var n = g.supply[c], cls = n ? '' : 'empty', cost = D[c].cost;
     if (b && n && cost <= b.max) cls += cost <= b.now ? ' can' : ' can2';
     if (mine && nd.k === 'supply' && n && cost <= nd.max && L.matches(c, nd.filter)) cls += ' can';
-    return '<button class="' + cls + '" data-c="' + c + '" style="--rc:' + ccol(c) + '"><span class="co">' + cost + '</span><span class="em">' + D[c].e + '</span><span class="nm">' + D[c].n + '</span><span class="n">' + n + '</span></button>';
+    return pileHtml(c, n, cls);
   }
   $('supK').innerHTML = ks.map(function (c) { return tile(c, true); }).join('');
-  $('supB').innerHTML = base.map(function (c) { return tile(c); }).join('') + '<button class="pile trashP" id="trashBtn"><span class="em">🗑️</span><span class="nm">追放</span><span class="n">' + g.trash.length + '</span></button>';
+  if (isLand()) base = ['gold', 'oukan', 'silver', 'hakuryo', 'copper', 'shoryo', 'curse'];   // 横画面：左の列に 財宝｜勝利点 の2列
+  $('supB').innerHTML = base.map(function (c) { return tile(c); }).join('') + (isLand() ? '' : '<button class="pile trashP" id="trashBtn" style="--rc:#6b6b74"><span class="cb">追放</span><span class="art"><b class="m">🗑️</b></span><span class="n">' + g.trash.length + '</span></button>');
 }
 function evText(g, e) {
   var n = function (p) { return '<b>' + esc(pname(g, p)) + '</b>'; }, mine = e.mine, list = function (a) { return a.map(cb).join(''); };
@@ -174,7 +189,7 @@ function evFx(g, e) {
   if (e.k === 'turn' && e.p === g.me) { sfx.turn(); popMsg('あなたの番！', 'good'); vibrate(30); }
   else if (e.k === 'gain' && e.c === 'oukan') { sfx.win(); if (e.p !== g.me) popMsg(pname(g, e.p) + ' が 🏰王冠領！', 'info'); }
   else if (e.k === 'gain' && e.c === 'curse' && e.p === g.me) { sfx.bust(); popMsg('🕸️ 呪いをもらった…', 'bad'); }
-  else if (e.k === 'play' && L.isA(e.c, 'attack') && e.p !== g.me) { sfx.bust(); var pr = document.querySelector('.pr[data-p="' + e.p + '"]'); if (pr) { pr.classList.remove('hitfx'); void pr.offsetWidth; pr.classList.add('hitfx'); } }
+  else if (e.k === 'play' && L.isA(e.c, 'attack') && e.p !== g.me) { sfx.bust(); document.querySelectorAll('.pr[data-p="' + e.p + '"],.op[data-p="' + e.p + '"]').forEach(function (pr) { pr.classList.remove('hitfx'); void pr.offsetWidth; pr.classList.add('hitfx'); }); }
   else if (e.k === 'play' || e.k === 'gain') sfx.card();
   else if (e.k === 'shuffle') sfx.dice();
   else if (e.k === 'hanebashi') sfx.safe();
@@ -194,17 +209,21 @@ function renderPrompt(g, nd, mine) {
   } else if (nd.k === 'action') {
     var acts = g.hand.filter(function (c) { return L.isA(c, 'action'); }).length;
     if (ui.focus >= 0 && g.hand[ui.focus]) { var c = g.hand[ui.focus]; t = cb(c) + '<span class="sm">' + cardText(c).replace(/<hr>/g, ' ') + '</span>'; b = btn('cancel', 'やめる', 'ghost') + btn('play', '▶ 使う', 'main'); }
+    else if (isLand()) { t = acts && g.actions > 0 ? '<b>アクション</b>　上にスワイプしてカードを使う' : '<b>アクション</b>　' + (acts ? 'アクションが残っていません' : 'アクションカードがありません'); b = btn('endAction', 'アクション終了', acts ? '' : 'main'); }
     else { t = '<b>A アクション</b>：使うカードをタップ（⚡' + g.actions + '）' + (acts ? '' : '<br><span class="sm">アクションカードがありません</span>'); b = btn('endAction', 'アクション終了 ▶', acts ? '' : 'main'); }
   } else if (nd.k === 'buy') {
     var tr = !g.bought && g.hand.some(function (c) { return L.isA(c, 'treasure'); });
+    if (isLand()) { t = '<b>購入</b>　' + (tr ? '上にスワイプして財宝カードを使う・' : '') + '光っている山をタップして買う'; b = (tr ? btn('all', '財宝を<br>すべて使用', 'sub') : '') + btn('endTurn', '購入フェイズ<br>終了', tr ? '' : 'main'); }
+    else {
     t = '<b>B 購入</b>：💰' + g.coins + '・🛒' + g.buys + '　光っている山をタップ' + (tr ? '<br><span class="sm">貨幣はタップで1枚ずつ出せます</span>' : '');
     b = (tr ? btn('all', 'すべての財宝を出す', 'sub') : '') + btn('endTurn', 'ターン終了', tr ? '' : 'main');
+    }
   } else if (nd.k === 'hand') {
     t = promptText(g, nd) + '<span class="sm">選んだ数：' + ui.sel.length + (nd.min === nd.max ? ' / ' + nd.max : '（' + nd.min + '〜' + nd.max + '枚）') + '</span>';
     var okN = ui.sel.length >= nd.min && ui.sel.length <= nd.max;
     b = btn('handOk', ui.sel.length || nd.min ? '決定' : '選ばない', 'main', !okN);
   } else if (nd.k === 'supply') t = promptText(g, nd);
-  else t = '👇 下のパネルで選んでください';
+  else t = isLand() ? '👉 パネルで選んでください' : '👇 下のパネルで選んでください';
   $('prompt').innerHTML = '<div class="pt">' + t + '</div>' + (b ? '<div class="pb">' + b + '</div>' : '');
   $('prompt').classList.toggle('mine', !!mine);
 }
@@ -222,7 +241,19 @@ function renderHand(g, nd, mine) {
     return cardHtml(c, cls, ' data-i="' + i + '"');
   }).join('') || '<div class="none">手札なし</div>';
   box.style.setProperty('--n', Math.max(5, h.length));
+  fanHand();
   $('handInfo').textContent = '手札 ' + h.length + '枚・山札 ' + g.P[g.me].nd + '枚';
+}
+// 横画面かどうか（スマホの横向き・PCの広い画面）
+function isLand() { return document.body.classList.contains('land'); }
+// 横画面：手札を扇形に重ねて並べる
+function fanHand() {
+  var box = $('hand'), cs = box.querySelectorAll('.cd'), n = cs.length, land = isLand();
+  if (!land || !n) { box.style.removeProperty('--ov'); cs.forEach(function (el) { el.style.removeProperty('--r'); el.style.removeProperty('--y'); el.style.zIndex = ''; }); return; }
+  var W = cs[0].offsetWidth, cw = box.clientWidth - W * 0.5, ov = n > 1 ? Math.max(W * 0.12, (n * W - cw) / (n - 1)) : 0;
+  ov = Math.min(ov, W * 0.82); box.style.setProperty('--ov', ov.toFixed(1) + 'px');
+  var step = Math.min(4, 26 / n), s = parseFloat(getComputedStyle(document.body).getPropertyValue('--s')) || 1;
+  cs.forEach(function (el, i) { var t = i - (n - 1) / 2; el.style.setProperty('--r', (t * step).toFixed(2) + 'deg'); el.style.setProperty('--y', (t * t * 1.1 * s * Math.min(1, 7 / n)).toFixed(1) + 'px'); el.style.zIndex = i + 1; });
 }
 // ---- 選択パネル（はい/いいえ・カードを選ぶ・物見やぐら） ----
 function closeSheets() { if (ui.cardSheet && !ui.sheetCtx) return; ui.cardSheet = false; ui.sheetCtx = null; overlay('choiceSheet', false); }   // 説明だけのシートは開いたまま

@@ -457,7 +457,7 @@
     if (e.mine && e.p === q) o.mine = e.mine;
     return o;
   }
-  function pubPlayer(P) { var all = owned(P); return { nh: P.hand.length, nd: P.deck.length, top: P.disc.length ? P.disc[P.disc.length - 1] : null, play: P.play.slice(), aside: P.aside.slice(), turns: P.turns, own: counts(all), total: all.length, vp: vpOf(all) }; }
+  function pubPlayer(P) { var all = owned(P); return { nh: P.hand.length, nd: P.deck.length, ndisc: P.disc.length, top: P.disc.length ? P.disc[P.disc.length - 1] : null, play: P.play.slice(), aside: P.aside.slice(), turns: P.turns, own: counts(all), total: all.length, vp: vpOf(all) }; }
   function viewFor(S, q, nEv) {
     var v = { np: S.np, kingdom: S.kingdom.slice(), supply: Object.assign({}, S.supply), trash: S.trash.slice(), turn: S.turn, turnNo: S.turnNo, phase: S.phase,
       actions: S.actions, buys: S.buys, coins: S.coins, merch: S.merch, silver: S.silver, bought: S.bought, over: S.over, result: S.result, first: S.first,

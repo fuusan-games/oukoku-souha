@@ -58,10 +58,14 @@ function cardText(c) {
   if (p.c) li.push('<b>🃏 +' + p.c + '</b> カードを引く'); if (p.a) li.push('<b>⚡ +' + p.a + '</b> アクション'); if (p.b) li.push('<b>🛒 +' + p.b + '</b> 購入'); if (p.m) li.push('<b>💰 +' + p.m + '</b>');
   return (li.length ? '<div class="pls">' + li.join('<br>') + '</div>' : '') + (d.tx ? '<div class="ctx">' + d.tx + '</div>' : '');
 }
+function artOf(c) { return window.KS_ART ? window.KS_ART.artHtml(c) : '<div class="art sc-day"><b class="m">' + D[c].e + '</b></div>'; }
 function cardHtml(c, cls, attrs) {
   if (!c) return '<div class="cd back' + (cls ? ' ' + cls : '') + '"' + (attrs || '') + '><span class="crest">👑</span></div>';
   var d = D[c], ps = plusStr(c), more = d.tx && !d.t.every(function (t) { return t === 'treasure' || t === 'victory' || t === 'curse'; });
-  return '<div class="cd ' + ccls(c) + (cls ? ' ' + cls : '') + '" style="--rc:' + ccol(c) + '"' + (attrs || '') + '><span class="co">' + d.cost + '</span><span class="em">' + d.e + '</span><span class="nm">' + d.n + '</span><span class="ps">' + (ps || '') + (more ? '<i>＋</i>' : '') + '</span></div>';
+  return '<div class="cd ' + ccls(c) + (cls ? ' ' + cls : '') + '" style="--rc:' + ccol(c) + '"' + (attrs || '') + '><span class="cb">' + d.n + '</span>' + artOf(c) + '<span class="cf"><span class="co">' + d.cost + '</span><span class="ps">' + (ps || '') + (more ? '<i>＋</i>' : '') + '</span></span></div>';
+}
+function pileHtml(c, n, cls) {   // 供給の山（名前の帯・絵・左下コスト・右下の残り枚数）
+  return '<button class="pile ' + ccls(c) + (cls ? ' ' + cls : '') + '" data-c="' + c + '" style="--rc:' + ccol(c) + '"><span class="cb">' + D[c].n + '</span>' + artOf(c) + '<span class="co">' + D[c].cost + '</span><span class="n">' + n + '</span></button>';
 }
 function miniHtml(c, n, cls) { return '<span class="mini ' + ccls(c) + (cls ? ' ' + cls : '') + '" style="--rc:' + ccol(c) + '">' + cemo(c) + '<b>' + cname(c) + '</b>' + (n > 1 ? '<small>×' + n + '</small>' : '') + '</span>'; }
 function minisOf(list) {   // 同じカードはまとめる（並びはそのまま）
